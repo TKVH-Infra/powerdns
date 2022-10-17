@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: powerdns
+resources:
+  - powerdns-admin-deploy.yml
+  - powerdns-admin-svc.yml
+  - mariadb-admin-deploy.yml
+  - mariadb-admin-svc.yml

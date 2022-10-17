@@ -1,0 +1,86 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: powerdns
+  labels:
+    app: powerdns
+    part-of: powerdns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: powerdns
+      part-of: powerdns
+  template:
+    metadata:
+      labels:
+        app: powerdns
+        part-of: powerdns
+    spec:
+      serviceAccountName: powerdns
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: disktype
+                operator: In
+                values:
+                - ssd
+      containers:
+      - name: powerdns
+        image: interlegis/powerdns:4.6.2
+        ports:
+        - name: powerdns
+          containerPort: 53
+          protocol: TCP
+        - name: powerdns-udp
+          containerPort: 53
+          protocol: UDP
+        - name: powerdns-web
+          containerPort: 8081
+          protocol: TCP
+        env:
+        - name: PDNSCONF_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: powerdns
+              key: PDNSCONF_API_KEY
+        - name: PDNSCONF_TCP_IDLE_TIMEOUT
+          value: "5"
+        - name: PDNSCONF_API
+          value: "yes"
+        - name: PDNSCONF_GMYSQL_HOST
+          value: mariadb
+        - name: PDNSCONF_GMYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: powerdns
+              key: MYSQL_USER
+        - name: PDNSCONF_GMYSQL_DBNAME
+          valueFrom:
+            secretKeyRef:
+              name: powerdns
+              key: MYSQL_DATABASE
+        - name: PDNSCONF_GMYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: powerdns
+              key: MYSQL_PASSWORD
+        volumeMounts:
+        - name: powerdns-secrets
+          mountPath: "/mnt/vault"
+          readOnly: true
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            memory: 200Mi
+      volumes:
+      - name: powerdns-secrets
+        csi:
+          driver: "secrets-store.csi.k8s.io"
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "powerdns"

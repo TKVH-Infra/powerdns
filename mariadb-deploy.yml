@@ -1,0 +1,78 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: mariadb
+  labels:
+    app: mariadb
+    part-of: powerdns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+      part-of: powerdns
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mariadb
+        part-of: powerdns
+    spec:
+      serviceAccountName: powerdns
+      containers:
+      - name: mariadb
+        image: ghcr.io/linuxserver/mariadb:10.5.13
+        ports:
+        - name: mariadb
+          containerPort: 3306
+        env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: "Europe/Paris"
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: powerdns
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_LOG_CONSOLE
+          value: "false"
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: powerdns
+              key: MYSQL_USER
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: powerdns
+              key: MYSQL_DATABASE
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: powerdns
+              key: MYSQL_PASSWORD
+        resources:
+          limits:
+            memory: 150Mi
+          requests:
+            memory: 100Mi
+        volumeMounts:
+        - name: powerdns-mariadb
+          mountPath: /config
+        - name: powerdns-secrets
+          mountPath: "/mnt/vault"
+          readOnly: true
+      volumes:
+      - name: powerdns-mariadb
+        persistentVolumeClaim:
+          claimName: powerdns-mariadb
+      - name: powerdns-secrets
+        csi:
+          driver: "secrets-store.csi.k8s.io"
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "powerdns"

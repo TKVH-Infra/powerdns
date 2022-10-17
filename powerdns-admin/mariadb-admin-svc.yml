@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-admin
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: mariadb-admin
+  selector:
+    app: mariadb-admin
+    part-of: powerdns

@@ -1,0 +1,64 @@
+apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+kind: SecretProviderClass
+metadata:
+  name: powerdns
+spec:
+  provider: vault
+  secretObjects:
+  - secretName: powerdns
+    type: Opaque
+    data: 
+    - objectName: MYSQL_USER
+      key: MYSQL_USER
+    - objectName: MYSQL_PASSWORD
+      key: MYSQL_PASSWORD
+    - objectName: MYSQL_DATABASE
+      key: MYSQL_DATABASE
+    - objectName: MYSQL_ROOT_PASSWORD
+      key: MYSQL_ROOT_PASSWORD
+    - objectName: PDNSCONF_API_KEY
+      key: PDNSCONF_API_KEY
+  - secretName: powerdns-admin
+    type: Opaque
+    data:
+    - objectName: MYSQL_USER_ADMIN
+      key: MYSQL_USER
+    - objectName: MYSQL_PASSWORD_ADMIN
+      key: MYSQL_PASSWORD
+    - objectName: MYSQL_DATABASE_ADMIN
+      key: MYSQL_DATABASE
+    - objectName: MYSQL_ROOT_PASSWORD_ADMIN
+      key: MYSQL_ROOT_PASSWORD
+  parameters:
+    vaultAddress: 'http://vault.vault:8200'
+    vaultKubernetesMountPath: 'k8s-vault-csi'
+    roleName: powerdns
+    objects: |
+      - objectName: "MYSQL_USER"
+        secretPath: "apps-kv/data/powerdns/database"
+        secretKey: "MYSQL_USER"
+      - objectName: "MYSQL_PASSWORD"
+        secretPath: "apps-kv/data/powerdns/database"
+        secretKey: "MYSQL_PASSWORD"
+      - objectName: "MYSQL_DATABASE"
+        secretPath: "apps-kv/data/powerdns/database"
+        secretKey: "MYSQL_DATABASE"
+      - objectName: "MYSQL_ROOT_PASSWORD"
+        secretPath: "apps-kv/data/powerdns/database"
+        secretKey: "MYSQL_ROOT_PASSWORD"
+      - objectName: "PDNSCONF_API_KEY"
+        secretPath: "apps-kv/data/powerdns/config"
+        secretKey: "PDNSCONF_API_KEY"
+
+      - objectName: "MYSQL_USER_ADMIN"
+        secretPath: "apps-kv/data/powerdns/admin/database"
+        secretKey: "MYSQL_USER"
+      - objectName: "MYSQL_PASSWORD_ADMIN"
+        secretPath: "apps-kv/data/powerdns/admin/database"
+        secretKey: "MYSQL_PASSWORD"
+      - objectName: "MYSQL_DATABASE_ADMIN"
+        secretPath: "apps-kv/data/powerdns/admin/database"
+        secretKey: "MYSQL_DATABASE"
+      - objectName: "MYSQL_ROOT_PASSWORD_ADMIN"
+        secretPath: "apps-kv/data/powerdns/admin/database"
+        secretKey: "MYSQL_ROOT_PASSWORD"

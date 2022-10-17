@@ -1,0 +1,61 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: powerdns-admin
+  labels:
+    app: powerdns-admin
+    part-of: powerdns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: powerdns-admin
+      part-of: powerdns
+  template:
+    metadata:
+      labels:
+        app: powerdns-admin
+        part-of: powerdns
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: disktype
+                operator: In
+                values:
+                - ssd
+      containers:
+      - name: powerdns-admin
+        image: ngoduykhanh/powerdns-admin:latest
+        ports:
+        - name: powerdns-admin
+          containerPort: 80
+        env:
+        - name: SQLALCHEMY_DATABASE_URI
+          value: mysql://<path:apps-kv/data/powerdns/admin/database#MYSQL_USER>:<path:apps-kv/data/powerdns/admin/database#MYSQL_PASSWORD>@mariadb-admin/<path:apps-kv/data/powerdns/admin/database#MYSQL_DATABASE>
+        - name: GUNICORN_TIMEOUT
+          value: "60"
+        - name: GUNICORN_WORKERS
+          value: "2"
+        - name: GUNICORN_LOGLEVEL
+          value: "debug"
+        - name: OFFLINE_MODE
+          value: "false"
+#        - name:  BIND_ADDRESS
+#          value: "0.0.0.0"
+        resources:
+          requests:
+            memory: 400Mi
+        readinessProbe:
+          tcpSocket:
+            port: powerdns-admin
+          initialDelaySeconds: 5
+          periodSeconds: 15
+        livenessProbe:
+          tcpSocket:
+            port: powerdns-admin
+          initialDelaySeconds: 15
+          periodSeconds: 20
